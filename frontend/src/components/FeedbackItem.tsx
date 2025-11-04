@@ -61,7 +61,7 @@ export default function FeedbackItem({
       console.log("token",token);
       console.log(fb._id);
       await axios.post(
-        `http://localhost:4000/api/${fb._id}/reply`,
+        `https://farmer-app-backend-ocin.onrender.com/api/${fb._id}/reply`,
         { content: replyText,
           username: name,
          },
