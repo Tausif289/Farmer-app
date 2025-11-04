@@ -25,7 +25,7 @@ const defaultValues: SoilValues = {
   calcium: null,
 };
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+const backendUrl = "https://farmer-app-backend-ocin.onrender.com";
 
 
 const SoilHealth: React.FC = () => {
