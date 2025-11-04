@@ -19,7 +19,7 @@ const CropRecommendation: React.FC = () => {
       if (!context) {
         throw new Error("AppContext must be used within AppContextProvider");
       }
-    const {soiltype,language,translate}=context; // Get soil type from context
+    const {soiltype}=context; // Get soil type from context
     //const t = translate[language]; 
   // Get crops for the selected soil type
   const recommendations: Crop[] = soiltype

@@ -18,7 +18,7 @@ const MarketPrice: React.FC = () => {
   const context = useContext(AppContext);
   if (!context) throw new Error("AppContext must be used inside AppContextProvider");
 
-  const { state, district } = context;
+  const { district } = context;
   const [crops, setCrops] = useState<Crop[]>([]);
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");

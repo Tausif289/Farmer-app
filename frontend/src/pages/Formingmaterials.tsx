@@ -10,10 +10,7 @@ import { AppContext } from "../context/appcontext";
 import { jwtDecode } from "jwt-decode";
 
 
-interface Improvement {
-  text: string;
-  done?: boolean;
-}
+
 interface Reply {
   _id: string;
   userId: string;
@@ -34,12 +31,7 @@ interface Feedback {
   updatedAt: string;
 }
 
-interface Props {
-  fb: Feedback;
-  currentUserId?: string;
-  onEdit: (fb: Feedback) => void;
-  onDelete: (id: string) => void;
-}
+
 interface TokenPayload {
   id: string;
 }

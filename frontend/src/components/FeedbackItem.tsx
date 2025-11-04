@@ -3,10 +3,6 @@ import { AppContext } from "../context/appcontext";
 import { useContext, useState } from "react";
 import axios from "axios";
 
-interface Improvement {
-  text: string;
-  done?: boolean;
-}
 interface Reply {
   _id: string;
   userId: string;

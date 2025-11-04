@@ -1,22 +1,8 @@
 import React, { useState } from 'react';
-import type { LucideIcon } from "lucide-react";
-import { ChevronDown, ChevronUp, Sprout, Droplets, Sun, Scissors } from 'lucide-react';
-import crops from '../assets/crops.ts';
-interface CropStep {
-  title: string;// ya React.FC<React.SVGProps<SVGSVGElement>>
-  //icon: LucideIcon,
-  description: string;
-  tips: string[];
-}
 
-interface Crop {
-  id: number;
-  name: string;
-  image: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  duration: string;
-  steps: CropStep[];
-}
+import { ChevronDown, ChevronUp} from 'lucide-react';
+import crops from '../assets/crops.ts';
+
 
 const CropFarmingGuide: React.FC = () => {
   const [expandedCards, setExpandedCards] = useState<number[]>([]);

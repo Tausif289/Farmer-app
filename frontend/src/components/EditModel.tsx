@@ -1,10 +1,6 @@
 
 import { useState } from "react";
 
-interface Improvement {
-  text: string;
-  done?: boolean;
-}
 interface Reply {
   _id: string;
   userId: string;

@@ -3,35 +3,6 @@ import { useState,useContext } from "react";
 import { postFeedback } from "../lib/api";
 import toast from "react-hot-toast";
 import { AppContext } from "../context/appcontext";
-
-interface Reply {
-  _id: string;
-  userId: string;
-  username: string;
-  content: string;
-  createdAt: string;
-}
-
-interface Feedback {
-  _id: string;
-  userId: string;
-  username: string;
-  title?: string;
-  content: string;
-  improvements?: { text: string; done: boolean; _id: string }[];
-  replies?: Reply[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Props {
-  fb: Feedback;                       // The feedback item
-  currentUserId?: string;             // Logged-in user's id
-  onEdit: (fb: Feedback) => void;     // Function to edit feedback
-  onDelete: (id: string) => void;     // Function to delete feedback
-}
-
-
 export default function FeedbackForm({ onAdded }: { onAdded: (fb: any) => void }) {
   const context = useContext(AppContext);
 
