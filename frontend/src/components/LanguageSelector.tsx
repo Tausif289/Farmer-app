@@ -70,7 +70,7 @@ const LanguageSelector: React.FC = () => {
       for (const node of allTextNodes) {
         const original = node.nodeValue || "";
         try {
-          const res = await fetch("http://localhost:4000/api/translate", {
+          const res = await fetch("https://farmer-app-backend-ocin.onrender.com/api/translate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text: original, targetLang }),

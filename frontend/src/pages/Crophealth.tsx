@@ -64,7 +64,7 @@ export default function CropHealthCheck() {
       const compressedBlob = await resizeAndCompressImage(selectedFile);
       const base64 = await toBase64(compressedBlob);
 
-      const res = await axios.post("http://localhost:4000/api/crop/health", {
+      const res = await axios.post("https://farmer-app-backend-ocin.onrender.com/api/crop/health", {
         imageBase64: base64,
       });
 

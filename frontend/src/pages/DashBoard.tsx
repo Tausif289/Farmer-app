@@ -30,7 +30,7 @@ const Dashboard: React.FC = () => {
   // ✅ Fetch crops from backend
   const fetchCrops = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/crops", {
+      const res = await axios.get("https://farmer-app-backend-ocin.onrender.com/api/crops", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCrops(res.data);
@@ -46,7 +46,7 @@ const Dashboard: React.FC = () => {
   // ✅ Add crop
   const handleAdd = async (newCrop: CropData) => {
     try {
-      const res = await axios.post("http://localhost:4000/api/crops", newCrop, {
+      const res = await axios.post("https://farmer-app-backend-ocin.onrender.com/api/crops", newCrop, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCrops((prev) => [...prev, res.data]);
@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
 
     try {
       const res = await axios.put(
-        `http://localhost:4000/api/crops/${id}`,
+        `https://farmer-app-backend-ocin.onrender.com/api/crops/${id}`,
         { cropName: updatedName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -77,7 +77,7 @@ const Dashboard: React.FC = () => {
   // ✅ Delete crop
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:4000/api/crops/${id}`, {
+      await axios.delete(`https://farmer-app-backend-ocin.onrender.com/api/crops/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCrops((prev) => prev.filter((c) => c._id !== id));
@@ -89,7 +89,7 @@ const Dashboard: React.FC = () => {
   // ✅ Optional: Get All Crops (for admin view)
   const fetchAllCrops = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/crops/all");
+      const res = await axios.get("https://farmer-app-backend-ocin.onrender.com/api/crops/all");
       console.log("All crops:", res.data);
     } catch (err) {
       console.error("Error fetching all crops:", err);

@@ -30,7 +30,7 @@ const Login: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // 🔹 Yahan apne backend ka URL daalo
-  const backendUrl = "http://localhost:4000";  
+  const backendUrl = "https://farmer-app-backend-ocin.onrender.com";  
 
   const states = [
     'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',

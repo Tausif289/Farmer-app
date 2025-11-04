@@ -23,7 +23,7 @@ const MarketPrice: React.FC = () => {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [loading, setLoading] = useState(false);
-  const backendUrl = "http://localhost:4000"; 
+  const backendUrl = "https://farmer-app-backend-ocin.onrender.com"; 
 
   useEffect(() => {
     if (!district) return;
