@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { 
   Home, 
@@ -19,7 +19,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const [openLang, setOpenLang] = useState(false);
+  //const [openLang, setOpenLang] = useState(false);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenLang(false);
+       
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
