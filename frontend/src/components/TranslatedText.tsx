@@ -11,7 +11,7 @@ const TranslatedText: React.FC<TranslatedTextProps> = ({ children }) => {
  if (!context) {
     throw new Error("AppContext must be used within AppContextProvider");
   }
-  const { language,setLanguage } = context;
+  const { language } = context;
   const [translated, setTranslated] = useState(children);
 
   useEffect(() => {

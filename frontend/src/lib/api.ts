@@ -1,11 +1,6 @@
 import axios from "axios";
 //import { Feedback } from "../types/feedback";
 
-
-interface Improvement {
-  text: string;
-  done?: boolean;
-}
 interface Reply {
   _id: string;
   userId: string;

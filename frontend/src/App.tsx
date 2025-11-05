@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Layout from './components/Layout';
@@ -16,7 +16,7 @@ import AskQuestion from './pages/Askquestion.tsx';
 import ScrollToTop from './components/ScrolPages.tsx';
 import SoilHealth from './pages/Soilhealth.tsx';
 
-import AppContextProvider from './context/appcontext.tsx';
+
 
 function App() {
   return (

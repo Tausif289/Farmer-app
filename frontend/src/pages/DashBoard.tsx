@@ -8,7 +8,6 @@ import {
   Sprout,
   DollarSign,
   Cloud,
-  TrendingUp,
   Users,
   Award,
   BarChart3,
@@ -55,25 +54,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // ✅ Edit crop
-  const handleEdit = async (id: string) => {
-    const updatedName = prompt("Enter new crop name:");
-    if (!updatedName) return;
-
-    try {
-      const res = await axios.put(
-        `https://farmer-app-backend-ocin.onrender.com/api/crops/${id}`,
-        { cropName: updatedName },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setCrops((prev) =>
-        prev.map((c) => (c._id === id ? { ...c, ...res.data } : c))
-      );
-    } catch (err) {
-      console.error("Error editing crop:", err);
-    }
-  };
-
   // ✅ Delete crop
   const handleDelete = async (id: string) => {
     try {
@@ -87,21 +67,6 @@ const Dashboard: React.FC = () => {
   };
 
   // ✅ Optional: Get All Crops (for admin view)
-  const fetchAllCrops = async () => {
-    try {
-      const res = await axios.get("https://farmer-app-backend-ocin.onrender.com/api/crops/all");
-      console.log("All crops:", res.data);
-    } catch (err) {
-      console.error("Error fetching all crops:", err);
-    }
-  };
-
-  const summaryCards = [
-    { title: "Active Crops", value: crops.length.toString(), icon: Sprout, color: "bg-green-100 text-green-600" },
-    { title: "Market Value", value: "$24,500", icon: DollarSign, color: "bg-blue-100 text-blue-600" },
-    { title: "Weather Score", value: "85%", icon: Cloud, color: "bg-purple-100 text-purple-600" },
-    { title: "Growth Rate", value: "+12%", icon: TrendingUp, color: "bg-orange-100 text-orange-600" },
-  ];
 
   const activities = [
     { title: "Planted Wheat", details: "Farmer John planted wheat in field A.", status: "Completed" },

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
-import { UploadCloud, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
+import { UploadCloud, Loader2 } from "lucide-react";
 
 type SoilValues = {
   ph?: number | null;

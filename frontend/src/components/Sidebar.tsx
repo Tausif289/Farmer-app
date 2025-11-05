@@ -7,7 +7,7 @@ import {
   DollarSign, 
   Cloud, 
   X, 
-   Sprout,
+  Sprout,
   ShoppingBag, 
   Bug, 
   MessageCircle 
