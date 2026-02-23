@@ -45,7 +45,7 @@ const Dashboard: React.FC = () => {
   // ✅ Add crop
   const handleAdd = async (newCrop: CropData) => {
     try {
-      const res = await axios.post("http://localhost:4000/api/crops", newCrop, {
+      const res = await axios.post("https://backend-foarmer-app.onrender.com/api/crops", newCrop, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCrops((prev) => [...prev, res.data]);
@@ -57,7 +57,7 @@ const Dashboard: React.FC = () => {
   // ✅ Delete crop
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:4000/api/crops/${id}`, {
+      await axios.delete(`https://backend-foarmer-app.onrender.com/api/crops/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCrops((prev) => prev.filter((c) => c._id !== id));
