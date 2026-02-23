@@ -31,7 +31,7 @@ const MarketPrice: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [loading, setLoading] = useState<boolean>(false);
 
-  const backendUrl = "http://localhost:4000";
+  const backendUrl = "https://backend-foarmer-app.onrender.com";
 
   // 🔥 Fetch only when district changes
   useEffect(() => {
