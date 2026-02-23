@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
   // ✅ Fetch crops from backend
   const fetchCrops = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/crops", {
+      const res = await axios.get("https://backend-foarmer-app.onrender.com/api/crops", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCrops(res.data);
