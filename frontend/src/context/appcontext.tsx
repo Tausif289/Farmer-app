@@ -62,7 +62,7 @@ const [state, setState] = useState<string>(() => {
 
 const [district, setDistrict]  = useState<string>(() => {
   const savedUser = localStorage.getItem("district");
-  return savedUser ? savedUser : "Kanpur"
+  return savedUser ? savedUser : "Mau"
 });
 
 const[soiltype, setSoiltype]  = useState<any>(() => {

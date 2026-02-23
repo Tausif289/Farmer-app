@@ -18,7 +18,7 @@ const AskQuestion: React.FC = () => {
 
     const newMessage: Message = {
       sender: "You",
-      text: question,
+      text: question, 
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -26,7 +26,7 @@ const AskQuestion: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("https://farmer-app-backend-ocin.onrender.com/api/askquestion", {
+      const res = await axios.post("http://localhost:4000/api/askquestion", {
         question,
       });
 
@@ -37,10 +37,25 @@ const AskQuestion: React.FC = () => {
       };
 
       setChat((prev) => [...prev, aiMessage]);
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error("Chat error:", error);
+
+      let errorMessage = "⚠️ Error getting answer.";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       setChat((prev) => [
         ...prev,
-        { sender: "AI", text: "⚠️ Error getting answer.", time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) },
+        {
+          sender: "AI",
+          text: errorMessage,
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
       ]);
     }
 
@@ -65,11 +80,10 @@ const AskQuestion: React.FC = () => {
             className={`mb-3 flex ${msg.sender === "You" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-xs px-4 py-2 rounded-lg shadow ${
-                msg.sender === "You"
+              className={`max-w-xs px-4 py-2 rounded-lg shadow ${msg.sender === "You"
                   ? "bg-green-500 text-white rounded-br-none"
                   : "bg-gray-200 text-gray-800 rounded-bl-none"
-              }`}
+                }`}
             >
               <p className="text-sm">{msg.text}</p>
               <span className="text-[10px] opacity-75 block mt-1 text-right">

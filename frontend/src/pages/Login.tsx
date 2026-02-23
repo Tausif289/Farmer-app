@@ -3,20 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { Sprout, User, Phone, MapPin, Map, Layers, Mail, Lock, Eye, EyeOff, X } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import {AppContext} from '../context/appcontext';
+import { AppContext } from '../context/appcontext';
 
 const Login: React.FC = () => {
   const context = useContext(AppContext);
-  
-    if (!context) {
-      throw new Error("AppContext must be used within AppContextProvider");
-    }
-  const {setName,setToken,setEmail,setDistrict,setMobilenumber,setSoiltype,setState}=context;
+
+  if (!context) {
+    throw new Error("AppContext must be used within AppContextProvider");
+  }
+  const { setName, setToken, setEmail, setDistrict, setMobilenumber, setSoiltype, setState } = context;
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    
+
     email: '',
     password: '',
     name: '',
@@ -30,7 +30,7 @@ const Login: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // 🔹 Yahan apne backend ka URL daalo
-  const backendUrl = "https://farmer-app-backend-ocin.onrender.com";  
+  const backendUrl = "http://localhost:4000";
 
   const states = [
     'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -46,14 +46,14 @@ const Login: React.FC = () => {
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    
+
     const { name, value } = e.target;
     console.log(e.target.value)
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -94,34 +94,34 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Submit clicked ✅", formData);
-    
+
     if (isLogin || validateForm()) {
       try {
         let response;
 
         if (isLogin) {
           //  Login API call
-          response = await axios.post(backendUrl+'/api/user/login' ,{
+          response = await axios.post(backendUrl + '/api/user/login', {
             email: formData.email,
             password: formData.password
           });
-        
+
 
         } else {
           // 🔹 Register API call
-          response = await axios.post(backendUrl+'/api/user/register', formData);
-           console.log("response of backend", response.data);
+          response = await axios.post(backendUrl + '/api/user/register', formData);
+          console.log("response of backend", response.data);
         }
 
         if (response.data.success) {
-           toast.success(isLogin ? "Login successful!" : "Registration successful!");
-           setToken(response.data.token)
-           setName(response.data.name)
-           setDistrict(response.data.district)
-           setEmail(response.data.email)
-           setMobilenumber(response.data.mobilenumber)
-           setState(response.data.state)
-           setSoiltype(response.data.soiltype)
+          toast.success(isLogin ? "Login successful!" : "Registration successful!");
+          setToken(response.data.token)
+          setName(response.data.name)
+          setDistrict(response.data.district)
+          setEmail(response.data.email)
+          setMobilenumber(response.data.mobilenumber)
+          setState(response.data.state)
+          setSoiltype(response.data.soiltype)
           // 🔹 Save token in localStorage
           localStorage.setItem("token", response.data.token);
           localStorage.setItem("name", JSON.stringify(response.data.name));
@@ -130,8 +130,13 @@ const Login: React.FC = () => {
         } else {
           toast.error(response.data.message || "Something went wrong!");
         }
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || err.message);
+      } catch (err) {
+        console.error("Error during login or registration:", err);
+        if (err instanceof Error) {
+          toast.error(err.message);
+        } else {
+          toast.error("Something went wrong");
+        }
       }
     }
   };
@@ -146,9 +151,9 @@ const Login: React.FC = () => {
           className="w-full h-full object-cover"
         />
       </div>
-      
+
       <div className="max-w-md w-full">
-        
+
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-3 mb-6">
@@ -167,33 +172,31 @@ const Login: React.FC = () => {
 
         {/* Login/Registration Form */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200 transition z-10"
-        >
-          <X className="w-6 h-6 text-gray-600" />
-        </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-200 transition z-10"
+          >
+            <X className="w-6 h-6 text-gray-600" />
+          </button>
           {/* Toggle Buttons */}
           <div className="flex bg-gray-100 rounded-lg p-1 mb-6 mt-6">
             <button
               type="button"
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
-                isLogin
+              className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${isLogin
                   ? 'bg-white text-green-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-800'
-              }`}
+                }`}
             >
               Sign In
             </button>
             <button
               type="button"
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
-                !isLogin
+              className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${!isLogin
                   ? 'bg-white text-green-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-800'
-              }`}
+                }`}
             >
               Sign Up
             </button>
@@ -204,8 +207,8 @@ const Login: React.FC = () => {
               {isLogin ? 'Sign In to Your Account' : 'Create Your Account'}
             </h2>
             <p className="text-gray-600">
-              {isLogin 
-                ? 'Access your personalized farming dashboard' 
+              {isLogin
+                ? 'Access your personalized farming dashboard'
                 : 'Get personalized crop recommendations for your farm'
               }
             </p>
@@ -270,134 +273,129 @@ const Login: React.FC = () => {
               <>
                 {/* Name Field */}
                 <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.name ? 'border-red-300' : 'border-gray-300'
+                        }`}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                 </div>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                    errors.name ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter your full name"
-                />
-              </div>
-              {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-            </div>
 
                 {/* Mobile Number Field */}
                 <div>
-              <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-2">
-                Mobile Number
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-400" />
+                  <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                    Mobile Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Phone className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="tel"
+                      id="mobilenumber"
+                      name="mobilenumber"
+                      value={formData.mobilenumber}
+                      onChange={handleInputChange}
+                      className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.mobile ? 'border-red-300' : 'border-gray-300'
+                        }`}
+                      placeholder="Enter 10-digit mobile number"
+                      maxLength={10}
+                    />
+                  </div>
+                  {errors.mobile && <p className="mt-1 text-sm text-red-600">{errors.mobile}</p>}
                 </div>
-                <input
-                  type="tel"
-                  id="mobilenumber"
-                  name="mobilenumber"
-                  value={formData.mobilenumber}
-                  onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                    errors.mobile ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter 10-digit mobile number"
-                  maxLength={10}
-                />
-              </div>
-              {errors.mobile && <p className="mt-1 text-sm text-red-600">{errors.mobile}</p>}
-            </div>
 
                 {/* State Field */}
                 <div>
-              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
-                State
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Map className="h-5 w-5 text-gray-400" />
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                    State
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Map className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      id="state"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors appearance-none bg-white ${errors.state ? 'border-red-300' : 'border-gray-300'
+                        }`}
+                    >
+                      <option value="">Select your state</option>
+                      {states.map((state) => (
+                        <option key={state} value={state}>
+                          {state}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.state && <p className="mt-1 text-sm text-red-600">{errors.state}</p>}
                 </div>
-                <select
-                  id="state"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors appearance-none bg-white ${
-                    errors.state ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">Select your state</option>
-                  {states.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.state && <p className="mt-1 text-sm text-red-600">{errors.state}</p>}
-            </div>
 
                 {/* District Field */}
                 <div>
-              <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-2">
-                District
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MapPin className="h-5 w-5 text-gray-400" />
+                  <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-2">
+                    District
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <MapPin className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      id="district"
+                      name="district"
+                      value={formData.district}
+                      onChange={handleInputChange}
+                      className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.district ? 'border-red-300' : 'border-gray-300'
+                        }`}
+                      placeholder="Enter your district"
+                    />
+                  </div>
+                  {errors.district && <p className="mt-1 text-sm text-red-600">{errors.district}</p>}
                 </div>
-                <input
-                  type="text"
-                  id="district"
-                  name="district"
-                  value={formData.district}
-                  onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${
-                    errors.district ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter your district"
-                />
-              </div>
-              {errors.district && <p className="mt-1 text-sm text-red-600">{errors.district}</p>}
-            </div>
 
                 {/* Soil Type Field */}
                 <div>
-              <label htmlFor="soiltype" className="block text-sm font-medium text-gray-700 mb-2">
-                Soil Type
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Layers className="h-5 w-5 text-gray-400" />
+                  <label htmlFor="soiltype" className="block text-sm font-medium text-gray-700 mb-2">
+                    Soil Type
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Layers className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      id="soiltype"
+                      name="soiltype"
+                      value={formData.soiltype}
+                      onChange={handleInputChange}
+                      className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors appearance-none bg-white ${errors.soilType ? 'border-red-300' : 'border-gray-300'
+                        }`}
+                    >
+                      <option value="">Select your soil type</option>
+                      {soiltypes.map((soil) => (
+                        <option key={soil} value={soil}>
+                          {soil}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.soilType && <p className="mt-1 text-sm text-red-600">{errors.soilType}</p>}
                 </div>
-                <select
-                  id="soiltype"
-                  name="soiltype"
-                  value={formData.soiltype}
-                  onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors appearance-none bg-white ${
-                    errors.soilType ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">Select your soil type</option>
-                  {soiltypes.map((soil) => (
-                    <option key={soil} value={soil}>
-                      {soil}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.soilType && <p className="mt-1 text-sm text-red-600">{errors.soilType}</p>}
-            </div>
               </>
             )}
 

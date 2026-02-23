@@ -75,10 +75,9 @@ const SoilHealth: React.FC = () => {
       } else {
         setError(res.data?.message || "Could not parse report. You can edit values manually.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Soil parse error:", err);
-      if (err.response?.data?.message) setError(err.response.data.message);
-      else if (err.message) setError(err.message);
+      if (err instanceof Error && err.message) setError(err.message);
       else setError("Unknown error while parsing report.");
     } finally {
       setLoading(false);
@@ -139,7 +138,7 @@ const SoilHealth: React.FC = () => {
   // When user edits values manually
   const handleValueChange = (key: string, raw: string) => {
     const parsed = raw === "" ? null : Number(raw);
-    setValues((prev) => ({ ...prev, [key]: Number.isNaN(parsed as any) ? null : parsed }));
+    setValues((prev) => ({ ...prev, [key]: Number.isNaN(parsed as unknown) ? null : parsed }));
   };
 
   // Submit final values to backend to save recommendations / farm profile
@@ -156,9 +155,9 @@ const SoilHealth: React.FC = () => {
       } else {
         setError(res.data?.message || "Save failed.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Save error:", err);
-      setError(err.message || "Save failed.");
+      setError(err instanceof Error ? err.message : "Save failed.");
     } finally {
       setLoading(false);
     }

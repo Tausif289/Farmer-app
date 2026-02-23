@@ -1,23 +1,63 @@
 import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
-import { 
-  Sun, 
-  Cloud, 
-  CloudRain, 
+import {
+  Sun,
+  Cloud,
+  CloudRain,
 } from "lucide-react";
 import { AppContext } from "../context/appcontext";
+
+import type { LucideIcon } from "lucide-react";
+
+interface CurrentWeather {
+  temperature: number;
+  condition: string;
+  humidity: number;
+  windSpeed: number;
+  visibility: number;
+  uvIndex: number;
+  feelsLike: number;
+  location: string;
+}
+
+interface ForecastDay {
+  day: string;
+  icon: LucideIcon;
+  high: number;
+  low: number;
+  humidity: number;
+  precipitation: number;
+}
+
+interface ForecastItem {
+  dt: number;
+  main: {
+    temp_max: number;
+    temp_min: number;
+    humidity: number;
+  };
+  weather: {
+    main: string;
+  }[];
+  pop: number;
+}
+
+interface ForecastApiResponse {
+  list: ForecastItem[];
+}
+
 
 const WeatherForecast: React.FC = () => {
   const context = useContext(AppContext);
   if (!context) throw new Error("AppContext must be used inside AppContextProvider");
 
   const { state, district } = context;
-  console.log(state,district);
-
-  const [currentWeather, setCurrentWeather] = useState<any | null>(null);
-  const [forecast, setForecast] = useState<any[]>([]);
+  const userState = context.state || "Uttar Pradesh";
+  const userDistrict = context.district || "Lucknow";
+  const [currentWeather, setCurrentWeather] = useState<CurrentWeather | null>(null);
+  const [forecast, setForecast] = useState<ForecastDay[]>([]);
   const [loading, setLoading] = useState(true);
-
+  console.log(import.meta.env.VITE_WEATHER_API_KEY)
   // Map OpenWeather conditions → icons
   const getWeatherIcon = (condition: string) => {
     if (condition.includes("Rain")) return CloudRain;
@@ -38,11 +78,11 @@ const WeatherForecast: React.FC = () => {
             params: {
               q: `${district},IN`,
               units: "metric",
-              appid:import.meta.env.VITE_WEATHER_API_KEY, // replace with your key
+              appid: import.meta.env.VITE_WEATHER_API_KEY,
             },
           }
         );
-
+        console.log('error',import.meta.env.VITE_WEATHER_API_KEY);
         const data = currentResp.data;
         setCurrentWeather({
           temperature: Math.round(data.main.temp),
@@ -52,15 +92,15 @@ const WeatherForecast: React.FC = () => {
           visibility: Math.round(data.visibility / 1000), // m → km
           uvIndex: 6, // need separate API, hardcode or ignore
           feelsLike: Math.round(data.main.feels_like),
-          location: `${district}, ${state}, India`,
+          location: `${userDistrict}, ${userState}, India`,
         });
 
         // ✅ Forecast (5-day / 3-hour API)
-        const forecastResp = await axios.get(
+        const forecastResp = await axios.get<ForecastApiResponse>(
           `https://api.openweathermap.org/data/2.5/forecast`,
           {
             params: {
-              q: `${district},IN`,
+              q: `${userDistrict},IN`,
               units: "metric",
               appid: "939fc60059567bed0633ecb215e5b5b1",
             },
@@ -68,19 +108,23 @@ const WeatherForecast: React.FC = () => {
         );
 
         // Pick one forecast every 24h (8 * 3h = 24h)
-        const daily = forecastResp.data.list.filter((_: any, idx: number) => idx % 8 === 0)
-          .slice(0, 5) // 5 days only
-          .map((item: any, index: number) => ({
-            day: index === 0 
-              ? "Today" 
-              : new Date(item.dt * 1000).toLocaleDateString("en-US", { weekday: "long" }),
+        const daily = forecastResp.data.list
+          .filter((_, idx) => idx % 8 === 0)
+          .slice(0, 5)
+          .map((item, index) => ({
+            day:
+              index === 0
+                ? "Today"
+                : new Date(item.dt * 1000).toLocaleDateString("en-US", {
+                  weekday: "long",
+                }),
             icon: getWeatherIcon(item.weather[0].main),
             high: Math.round(item.main.temp_max),
             low: Math.round(item.main.temp_min),
             humidity: item.main.humidity,
-            precipitation: Math.round(item.pop * 100), // %
+            precipitation: Math.round(item.pop * 100),
           }));
-
+        console.log(import.meta.env.VITE_WEATHER_API_KEY);
         setForecast(daily);
       } catch (err) {
         console.error("Weather fetch error:", err);
@@ -147,7 +191,7 @@ const WeatherForecast: React.FC = () => {
 
       {/* 🔹 Forecast & CropAdvice UI stays same */}
       {/* reuse your existing forecast + cropAdvice rendering below */}
-      
+
       {/* Forecast */}
       <div className="bg-white rounded-xl p-6 shadow-lg">
         <div className="flex items-center justify-between mb-6">

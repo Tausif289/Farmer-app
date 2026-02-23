@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
   // ✅ Fetch crops from backend
   const fetchCrops = async () => {
     try {
-      const res = await axios.get("https://farmer-app-backend-ocin.onrender.com/api/crops", {
+      const res = await axios.get("http://localhost:4000/api/crops", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCrops(res.data);
@@ -45,7 +45,7 @@ const Dashboard: React.FC = () => {
   // ✅ Add crop
   const handleAdd = async (newCrop: CropData) => {
     try {
-      const res = await axios.post("https://farmer-app-backend-ocin.onrender.com/api/crops", newCrop, {
+      const res = await axios.post("http://localhost:4000/api/crops", newCrop, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCrops((prev) => [...prev, res.data]);
@@ -57,7 +57,7 @@ const Dashboard: React.FC = () => {
   // ✅ Delete crop
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`https://farmer-app-backend-ocin.onrender.com/api/crops/${id}`, {
+      await axios.delete(`http://localhost:4000/api/crops/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCrops((prev) => prev.filter((c) => c._id !== id));
@@ -121,9 +121,23 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Crop Cards (with routes) */}
-      <div className="p-4">
-        <CropCards crops={crops} onDelete={handleDelete} onAdd={handleAdd} />
-      </div>
+      {/* Crop Section Heading */}
+<div className="bg-white rounded-xl p-6 shadow-lg">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-3xl font-extrabold text-green-600 mb-2">
+  🌾 Your Recent Crops
+</h3>
+<p className="text-gray-600 mb-4">
+  Add, track, and manage your farm crops efficiently.
+</p>
+  </div>
+
+  <CropCards 
+    crops={crops} 
+    onDelete={handleDelete} 
+    onAdd={handleAdd} 
+  />
+</div>
 
       {/* Recent Activities */}
       <div className="bg-white rounded-xl p-6 shadow-lg">

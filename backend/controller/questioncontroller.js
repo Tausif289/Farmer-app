@@ -1,25 +1,41 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
+import 'dotenv/config';
 
-// API key load karo (dotenv use karo to .env se)
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const openai = new OpenAI({
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
 
 export const askQuestion = async (req, res) => {
   try {
     const { question } = req.body;
 
-    // Model select karo (gemini-1.5-flash ya gemini-1.5-pro)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    if (!question || question.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        error: "Question is required",
+      });
+    }
 
+    const completion = await openai.chat.completions.create({
+      model: "openai/gpt-3.5-turbo",
+      messages: [
+        { role: "user", content: question }
+      ],
+    });
 
-    // Response lo
-    const result = await model.generateContent(question);
+    const answer = completion.choices[0].message.content;
 
     res.json({
       success: true,
-      answer: result.response.text(),
+      answer,
     });
+
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error("OpenRouter Error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
