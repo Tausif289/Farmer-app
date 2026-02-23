@@ -25,7 +25,7 @@ const defaultValues: SoilValues = {
   calcium: null,
 };
 
-const backendUrl = "https://farmer-app-backend-ocin.onrender.com";
+const backendUrl = "https://backend-foarmer-app.onrender.com";
 
 
 const SoilHealth: React.FC = () => {
