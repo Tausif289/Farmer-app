@@ -57,7 +57,6 @@ const WeatherForecast: React.FC = () => {
   const [currentWeather, setCurrentWeather] = useState<CurrentWeather | null>(null);
   const [forecast, setForecast] = useState<ForecastDay[]>([]);
   const [loading, setLoading] = useState(true);
-  console.log(import.meta.env.VITE_WEATHER_API_KEY)
   // Map OpenWeather conditions → icons
   const getWeatherIcon = (condition: string) => {
     if (condition.includes("Rain")) return CloudRain;
@@ -82,7 +81,6 @@ const WeatherForecast: React.FC = () => {
             },
           }
         );
-        console.log('error',import.meta.env.VITE_WEATHER_API_KEY);
         const data = currentResp.data;
         setCurrentWeather({
           temperature: Math.round(data.main.temp),
@@ -124,7 +122,7 @@ const WeatherForecast: React.FC = () => {
             humidity: item.main.humidity,
             precipitation: Math.round(item.pop * 100),
           }));
-        console.log(import.meta.env.VITE_WEATHER_API_KEY);
+        
         setForecast(daily);
       } catch (err) {
         console.error("Weather fetch error:", err);
