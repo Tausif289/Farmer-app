@@ -34,7 +34,7 @@ const Dashboard: React.FC = () => {
       });
       setCrops(res.data);
     } catch (err) {
-      console.error("Error fetching crops:", err);
+      console.log("Error fetching crops:", err);
     }
   };
 
