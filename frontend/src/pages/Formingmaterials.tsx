@@ -42,7 +42,6 @@ export default function FeedbackPage() {
       throw new Error("AppContext must be used within AppContextProvider");
     }
   const {token}=context;
-  console.log(token);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Feedback | null>(null);
@@ -58,9 +57,7 @@ useEffect(() => {
   try {
     const payload = jwtDecode<TokenPayload>(token);
     setCurrentUserId(payload.id);
-    console.log("Decoded userId:", payload.id);
   } catch (err) {
-    console.error("JWT decode failed", err);
     setCurrentUserId(undefined);
   }
 }, [token]);
@@ -73,10 +70,9 @@ useEffect(() => {
     setLoading(true);
     try {
       const data = await fetchFeedbacks();
-      console.log(data);
       setFeedbacks(data);
     } catch (err) {
-      console.error(err);
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -94,7 +90,6 @@ useEffect(() => {
       setFeedbacks(prev => prev.filter(f => f._id !== id));
       toast.success("Deleted");
     } catch (err) {
-      console.error(err);
       toast.error("Delete failed");
     }
   };
