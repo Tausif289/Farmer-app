@@ -45,8 +45,7 @@ const createtoken = (id) => {
 
 //register user
 const registeruser = async (req, res) => {
-  const { email, password, name, mobilenumber,state,district,soiltype} = req.body;
-  console.log(req.body.name);
+  const { email, password, name, mobilenumber,state,district,soiltype} = req.body;;
   try {
     if(!name || !email || !password|| !mobilenumber || !state || !district || !soiltype){
         return (
