@@ -106,27 +106,31 @@ export default function CropHealthCheck() {
     <div className="w-full px-5 md:px-10 py-5 mx-auto">
 
       {/* BANNER (NOT REMOVED ✅) */}
-      <div className="relative w-full h-72 md:h-96 rounded-3xl shadow-xl overflow-hidden mb-8">
-        <img
-          src="https://img.freepik.com/premium-photo/crop-rotation-soil-testing-protocol-wallpaper_987764-48146.jpg"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <div className="text-center text-white px-6">
-            <h1 className="text-4xl md:text-5xl font-extrabold">
-              🤖 AI Powered Crop Health Scanner
-            </h1>
-            <p className="mt-4 text-lg md:text-xl text-green-200">
-              Advanced AI detects plant diseases with smart insights
-            </p>
-          </div>
-        </div>
-      </div>
+<div className="relative w-full h-48 sm:h-64 md:h-96 rounded-3xl shadow-xl overflow-hidden mb-8">
+  {/* Background Image */}
+  <img
+    src="https://img.freepik.com/premium-photo/crop-rotation-soil-testing-protocol-wallpaper_987764-48146.jpg"
+    alt="Crop Health"
+    className="w-full h-full object-cover"
+  />
+
+  {/* Overlay for readability */}
+  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 flex items-center justify-center">
+    <div className="text-center text-white px-4 sm:px-6">
+      <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-wide drop-shadow-2xl">
+        🤖 AI Powered Crop Health Scanner
+      </h1>
+      <p className="mt-2 sm:mt-4 text-sm sm:text-lg md:text-xl font-light leading-relaxed max-w-2xl mx-auto text-green-200">
+        Upload your crop image to detect diseases, <span className="font-semibold">identify plant health</span>, and get <span className="text-green-300 font-semibold">smart treatment recommendations</span>.
+      </p>
+    </div>
+  </div>
+</div>
 
       {/* Upload Card */}
-      <div className="bg-white rounded-3xl shadow-2xl p-8 border border-green-200">
+      <div className="bg-white rounded-3xl shadow-2xl p-4 sm:p-6 md:p-8 border border-green-200">
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          <div className="border-2 border-dashed border-green-400 rounded-xl p-8 text-center bg-green-50 hover:bg-green-100 transition">
+         <div className="border-2 border-dashed border-green-400 rounded-xl p-4 sm:p-6 md:p-8 text-center bg-green-50 hover:bg-green-100 transition">
             <input
               type="file"
               accept="image/*"
