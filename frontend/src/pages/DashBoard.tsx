@@ -40,7 +40,7 @@ const fetchCrops = async () => {
       : {};
 
     const res = await axios.get(
-      "http://localhost:4000/api/crops",
+      "https://backend-foarmer-app.onrender.com/api/crops",
       config
     );
 
@@ -67,7 +67,7 @@ const fetchCrops = async () => {
 
   try {
     const res = await axios.post(
-      "http://localhost:4000/api/crops",
+      "https://backend-foarmer-app.onrender.com/api/crops",
       newCrop,
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -89,7 +89,7 @@ const fetchCrops = async () => {
 
   try {
     await axios.delete(
-      `http://localhost:4000/api/crops/${id}`,
+      `https://backend-foarmer-app.onrender.com/api/crops/${id}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }

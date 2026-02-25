@@ -70,7 +70,7 @@ export default function CropHealthCheck() {
       const base64 = await toBase64(compressed);
 
       const res = await axios.post(
-        "http://localhost:4000/api/crop/health",
+        "https://backend-foarmer-app.onrender.com/api/crop/health",
         { imageBase64: base64 }
       );
 

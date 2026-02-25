@@ -22,7 +22,7 @@ const TranslatedText: React.FC<TranslatedTextProps> = ({ children }) => {
 
     const translate = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/translate/batch", {
+        const res = await fetch("https://backend-foarmer-app.onrender.com/api/translate/batch", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ texts: [children], targetLang: language }),

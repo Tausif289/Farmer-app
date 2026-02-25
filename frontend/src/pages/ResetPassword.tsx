@@ -10,7 +10,7 @@ const ResetPassword: React.FC = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const backendUrl = "http://localhost:4000";
+  const backendUrl = "https://backend-foarmer-app.onrender.com";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

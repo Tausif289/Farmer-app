@@ -46,7 +46,7 @@ const AskQuestion: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:4000/api/askquestion", {
+      const res = await axios.post("https://backend-foarmer-app.onrender.com/api/askquestion", {
         question,
       });
 

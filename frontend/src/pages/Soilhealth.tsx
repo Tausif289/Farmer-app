@@ -52,7 +52,7 @@ interface AIImageResponse {
   message?: string;
 }
 
-const backendUrl = "http://localhost:4000";
+const backendUrl = "https://backend-foarmer-app.onrender.com";
 
 const SoilHealth: React.FC = () => {
   /* ===============================

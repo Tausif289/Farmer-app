@@ -9,7 +9,7 @@ const ForgotPassword: React.FC = () => {
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
-    const backendUrl = "http://localhost:4000";
+    const backendUrl = "https://backend-foarmer-app.onrender.com";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

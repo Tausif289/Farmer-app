@@ -55,7 +55,7 @@ export default function FeedbackItem({
       setLoading(true);
       const token = localStorage.getItem("token");
       await axios.post(
-        `https://farmer-app-backend-ocin.onrender.com/api/${fb._id}/reply`,
+        `https://backend-foarmer-app.onrender.com/api/${fb._id}/reply`,
         { content: replyText,
           username: name,
          },
