@@ -137,7 +137,7 @@ console.log("Hashed Token (stored in DB):", hashedToken);
     await user.save();
 
     // Create reset URL
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetUrl = `https://farmer-bl1m.onrender.com/reset-password/${resetToken}`;
 
     // Setup mail transporter
     const transporter = nodemailer.createTransport({
