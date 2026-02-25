@@ -18,7 +18,7 @@ export default function FeedbackForm({ onAdded }: { onAdded: (fb: any) => void }
   const [improvementsText, setImprovementsText] = useState("");
 
   const handleSubmit = async (e: any) => {
-     console.log("Form submitted!"); // <- check if this prints
+  
     e.preventDefault();
     if (!token) return toast.error("Please login to submit feedback");
 
@@ -29,12 +29,10 @@ export default function FeedbackForm({ onAdded }: { onAdded: (fb: any) => void }
 
     try {
       const feedback = await postFeedback({ title, content, improvements,username:name}, token);
-      console.log(title,token, content, improvements)
       setTitle(""); setContent(""); setImprovementsText("");
       onAdded(feedback);
       toast.success("Feedback posted");
     } catch (err) {
-      console.error(err);
       toast.error("Failed to post feedback");
     }
   };

@@ -54,8 +54,6 @@ export default function FeedbackItem({
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      console.log("token",token);
-      console.log(fb._id);
       await axios.post(
         `https://farmer-app-backend-ocin.onrender.com/api/${fb._id}/reply`,
         { content: replyText,
@@ -68,7 +66,7 @@ export default function FeedbackItem({
       setReplyText("");
       refresh(); // reload feedback list after posting
     } catch (err) {
-      console.error("Error posting reply:", err);
+      console.log("Error posting reply:", err);
     } finally {
       setLoading(false);
     }
