@@ -17,7 +17,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const hideFooterRoutes = ["/ask-question"];
 
   // ✅ Routes where sidebar should be hidden
-  const hideSidebarRoutes = ["/", "/login", "/signup"];
+  const hideSidebarRoutes = [ "/login", "/signup"];
 
   const isSidebarHidden = hideSidebarRoutes.includes(location.pathname);
 

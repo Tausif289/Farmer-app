@@ -2,6 +2,8 @@ import usermodel from "../model/usermodel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import validator from "validator";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 
 
@@ -107,4 +109,118 @@ const registeruser = async (req, res) => {
   }
 };
 
-export { loginuser, registeruser };
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await usermodel.findOne({ email });
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "User not found with this email",
+      });
+    }
+
+    // Create reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    // Hash token before saving to DB
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+    console.log("Reset Token (sent in email):", resetToken);
+console.log("Hashed Token (stored in DB):", hashedToken);
+    await user.save();
+
+    // Create reset URL
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+
+    // Setup mail transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+    console.log(process.env.EMAIL_USER);
+    console.log(process.env.EMAIL_PASS);
+    const message = `
+      You requested a password reset.
+      Click here to reset your password:
+      ${resetUrl}
+    `;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: "Password Reset Request",
+      text: message,
+    });
+
+    res.json({
+      success: true,
+      message: "Reset link sent to your email",
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      message: "Email could not be sent",
+    });
+  }
+};
+
+
+const resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  try {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await usermodel.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "Invalid or expired token",
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password reset successful",
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+export { loginuser, registeruser, forgotPassword, resetPassword };

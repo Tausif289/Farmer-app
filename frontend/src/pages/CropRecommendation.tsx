@@ -44,16 +44,16 @@ const CropRecommendation: React.FC = () => {
 
   return (
     <div className="space-y-6 p-6">
-      
+
       {/* Header */}
       <div className="bg-white rounded-xl p-6 shadow-lg">
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
           <img
             src="https://images.pexels.com/photos/1595108/pexels-photo-1595108.jpeg?auto=compress&cs=tinysrgb&w=200"
             alt="Crop field"
-            className="w-24 h-24 object-cover rounded-lg"
+            className="w-full sm:w-24 h-24 object-cover rounded-lg"
           />
-          <div>
+          <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               Personalized Crop Recommendations
             </h2>

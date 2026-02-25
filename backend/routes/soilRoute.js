@@ -1,15 +1,15 @@
 import express from "express";
 import multer from "multer";
-import { parseSoilReport, saveSoilReport } from "../controller/soilreportcontroller.js";
+import { analyzeSoilImage,parseSoilReportAI } from "../controller/soilreportcontroller.js";
 
 const upload = multer({ dest: "uploads/" });
 const router = express.Router();
 
 // Upload & parse soil report
-router.post("/parse", upload.single("file"), parseSoilReport);
+router.post("/parse", upload.single("file"), parseSoilReportAI);
 
-// Save soil report
-router.post("/save", saveSoilReport);
+// Analyze soil image
+router.post("/analyze-image", analyzeSoilImage);
 
 export default router;
 

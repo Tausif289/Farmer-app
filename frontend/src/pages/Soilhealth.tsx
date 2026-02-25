@@ -1,321 +1,338 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
-import { UploadCloud, Loader2 } from "lucide-react";
+import { UploadCloud, Loader2, Camera } from "lucide-react";
 
-type SoilValues = {
+interface SoilValues {
   ph?: number | null;
-  nitrogen?: number | null;      // in mg/kg or ppm - adapt to your lab units
-  phosphorus?: number | null;    // in mg/kg or ppm
-  potassium?: number | null;     // optional
-  calcium?: number | null;       // in mg/kg or ppm
-  [key: string]: number | null | undefined;
-};
+  nitrogen?: number | null;
+  phosphorus?: number | null;
+  potassium?: number | null;
+  calcium?: number | null;
+  organicCarbon?: number | null;
+  ec?: number | null;
+}
 
-type ParseResponse = {
+interface Analysis {
+  soilHealthScore?: number | null; // <--- allow null
+  fertilityLevel?: string | null;
+  fertilizerSuggestion?: string | null;
+  majorIssues?: string[];
+  cropRecommendation?: string[];
+}
+
+interface AIResponse {
   success: boolean;
-  data?: SoilValues;
+  data: {                // remove ? here so TS knows data exists
+    soilValues?: Record<string, unknown>;
+    analysis?: Record<string, unknown>;
+  };
   message?: string;
-};
+}
 
-const defaultValues: SoilValues = {
-  ph: null,
-  nitrogen: null,
-  phosphorus: null,
-  potassium: null,
-  calcium: null,
-};
+interface SoilAnalysis {
+  soilType?: string | null;
+  moistureLevel?: string | null;
+  organicMatterLevel?: string | null;
+  salinitySigns?: boolean | null;
+  surfaceCondition?: string | null;
+}
 
-const backendUrl = "https://farmer-app-backend-ocin.onrender.com";
+interface HealthAssessment {
+  overallHealth?: string | null;
+  confidenceScore?: number | null;
+  recommendation?: string | null;
+}
 
+interface AIImageResponse {
+  success: boolean;
+  data: {
+    soilAnalysis?: SoilAnalysis;
+    healthAssessment?: HealthAssessment;
+  };
+  message?: string;
+}
+
+const backendUrl = "http://localhost:4000";
 
 const SoilHealth: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [previewName, setPreviewName] = useState<string | null>(null);
-  const [values, setValues] = useState<SoilValues>({ ...defaultValues });
-  const [loading, setLoading] = useState(false);
-  const [resultMessage, setResultMessage] = useState<string | null>(null);
+  /* ===============================
+     📄 SOIL REPORT STATES
+  =================================*/
+  const [reportFile, setReportFile] = useState<File | null>(null);
+  const [reportValues, setReportValues] = useState<SoilValues | null>(null);
+  const [reportAnalysis, setReportAnalysis] = useState<Analysis | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+
+  /* ===============================
+     📸 SOIL IMAGE STATES
+  =================================*/
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageValues, setImageValues] = useState<SoilAnalysis | null>(null);
+const [imageAnalysis, setImageAnalysis] = useState<HealthAssessment | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
 
-  // Upload file input change
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null);
-    const f = e.target.files?.[0] || null;
-    setFile(f);
-    setPreviewName(f ? f.name : null);
-  };
+  const reportRef = useRef<HTMLInputElement | null>(null);
+  const imageRef = useRef<HTMLInputElement | null>(null);
 
-  // Send file to backend to parse soil report
-  const analyzeReport = async () => {
-    if (!file) {
-      setError("Please upload a soil report file (image/pdf/csv).");
+  /* ===================================================
+     🔹 UTILITY FUNCTIONS TO NORMALIZE AI RESPONSE
+  ===================================================*/
+  // Normalizes raw API soil values into typed SoilValues
+  const normalizeSoilValues = (values: Partial<Record<string, unknown>> = {}): SoilValues => ({
+    ph: typeof values.pH === "number" ? values.pH : null,
+    nitrogen: typeof values.nitrogen === "number" ? values.nitrogen : null,
+    phosphorus: typeof values.phosphorus === "number" ? values.phosphorus : null,
+    potassium: typeof values.potassium === "number" ? values.potassium : null,
+    calcium: typeof values.calcium === "number" ? values.calcium : null,
+    organicCarbon: typeof values.organicCarbon === "number" ? values.organicCarbon : null,
+    ec: typeof values.ec === "number" ? values.ec : null,
+  });
+
+  // Normalizes raw API analysis into typed Analysis
+  const normalizeAnalysis = (analysis: Partial<Record<string, unknown>> = {}): Analysis => ({
+    soilHealthScore: typeof analysis.soilHealthScore === "number" ? analysis.soilHealthScore : null,
+    fertilityLevel: typeof analysis.fertilityLevel === "string" ? analysis.fertilityLevel : undefined,
+    fertilizerSuggestion: typeof analysis.fertilizerSuggestion === "string" ? analysis.fertilizerSuggestion : undefined,
+    majorIssues: Array.isArray(analysis.majorIssues) ? (analysis.majorIssues as string[]) : [],
+    cropRecommendation: Array.isArray(analysis.cropRecommendation)
+      ? (analysis.cropRecommendation as string[])
+      : [],
+  });
+
+
+  const normalizeSoilAnalysis = (data: Partial<SoilAnalysis> = {}): SoilAnalysis => ({
+  soilType: typeof data.soilType === "string" ? data.soilType : null,
+  moistureLevel: typeof data.moistureLevel === "string" ? data.moistureLevel : null,
+  organicMatterLevel: typeof data.organicMatterLevel === "string" ? data.organicMatterLevel : null,
+  salinitySigns: typeof data.salinitySigns === "boolean" ? data.salinitySigns : null,
+  surfaceCondition: typeof data.surfaceCondition === "string" ? data.surfaceCondition : null,
+});
+
+const normalizeHealthAssessment = (data: Partial<HealthAssessment> = {}): HealthAssessment => ({
+  overallHealth: typeof data.overallHealth === "string" ? data.overallHealth : null,
+  confidenceScore: typeof data.confidenceScore === "number" ? data.confidenceScore : null,
+  recommendation: typeof data.recommendation === "string" ? data.recommendation : null,
+});
+
+  /* ===================================================
+     📄 PARSE SOIL REPORT
+  ===================================================*/
+  const analyzeReport = async (): Promise<void> => {
+    if (!reportFile) {
+      setError("Upload soil report first");
       return;
     }
-    setLoading(true);
-    setError(null);
-    setResultMessage(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      setReportLoading(true);
+      setError(null);
 
-      // Example endpoint: POST /api/soil/parse
-      const res = await axios.post<ParseResponse>(
-        `${backendUrl}/api/soil/parse`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          timeout: 60000,
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        const res = await axios.post<AIResponse>(`${backendUrl}/api/soil/parse`, { imageBase64: base64 });
+
+        if (res.data.success && res.data.data) {
+          setReportValues(normalizeSoilValues(res.data.data.soilValues));
+          setReportAnalysis(normalizeAnalysis(res.data.data.analysis));
+        } else {
+          setError(res.data.message ?? "Report AI parsing failed");
         }
+
+        setReportLoading(false);
+      };
+
+      reader.readAsDataURL(reportFile);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Server error");
+      setReportLoading(false);
+    }
+  };
+
+  /* ===================================================
+     📸 ANALYZE SOIL IMAGE
+  ===================================================*/
+  const analyzeImage = async (): Promise<void> => {
+  if (!imageFile) {
+    setError("Upload soil image first");
+    return;
+  }
+
+  try {
+    setImageLoading(true);
+    setError(null);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+
+      const res = await axios.post<AIImageResponse>(
+        `${backendUrl}/api/soil/analyze-image`,
+        { imageBase64: base64 }
       );
 
-      if (res.data?.success && res.data.data) {
-        setValues((prev) => ({ ...prev, ...res.data!.data! }));
-        setResultMessage("Report parsed successfully. Edit values if needed.");
+      if (res.data.success && res.data.data) {
+        const { soilAnalysis = {}, healthAssessment = {} } = res.data.data;
+
+        setImageValues(normalizeSoilAnalysis(soilAnalysis));
+        setImageAnalysis(normalizeHealthAssessment(healthAssessment));
       } else {
-        setError(res.data?.message || "Could not parse report. You can edit values manually.");
+        setError(res.data.message ?? "Image AI analysis failed");
       }
-    } catch (err: unknown) {
-      console.error("Soil parse error:", err);
-      if (err instanceof Error && err.message) setError(err.message);
-      else setError("Unknown error while parsing report.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Local suggestion engine (fallback/extra)
-  const generateSuggestions = (v: SoilValues) => {
-    const suggestions: string[] = [];
+      setImageLoading(false);
+    };
 
-    const ph = v.ph ?? null;
-    const n = v.nitrogen ?? null;
-    const p = v.phosphorus ?? null;
-    const ca = v.calcium ?? null;
-    const k = v.potassium ?? null;
-
-    // pH suggestions (example thresholds — adjust based on crops)
-    if (ph !== null) {
-      if (ph < 5.5) suggestions.push("Soil is acidic (pH < 5.5). Apply lime (calcitic or dolomitic lime) to raise pH.");
-      else if (ph >= 5.5 && ph <= 7.5) suggestions.push("Soil pH is good for most crops (5.5–7.5). Maintain with organic matter.");
-      else suggestions.push("Soil is alkaline (pH > 7.5). Consider gypsum and acidifying fertilizers (use carefully).");
-    } else suggestions.push("pH not available — consider testing soil pH.");
-
-    // Nitrogen
-    if (n !== null) {
-      if (n < 100) suggestions.push("Nitrogen is low — apply nitrogen-rich fertilizers (e.g., urea, ammonium sulfate) or green manuring.");
-      else if (n >= 100 && n <= 250) suggestions.push("Nitrogen level is moderate. Consider split N applications during crop growth.");
-      else suggestions.push("Nitrogen is high — avoid excess N; monitor crop growth to prevent lodging and nutrient imbalance.");
-    }
-
-    // Phosphorus
-    if (p !== null) {
-      if (p < 15) suggestions.push("Phosphorus is low — apply P fertilizers like DAP or single super phosphate.");
-      else if (p >= 15 && p <= 30) suggestions.push("Phosphorus is moderate — maintain with balanced fertilization.");
-      else suggestions.push("Phosphorus is high — excess P can fix micronutrients; avoid adding more P.");
-    }
-
-    // Calcium
-    if (ca !== null) {
-      if (ca < 500) suggestions.push("Calcium is low — consider gypsum or lime depending on pH and crop requirement.");
-      else suggestions.push("Calcium adequate — good for cell wall strength and yield quality.");
-    }
-
-    // Potassium
-    if (k !== null) {
-      if (k < 150) suggestions.push("Potassium is low — apply potash (MOP) as per crop requirement.");
-      else suggestions.push("Potassium adequate — maintain with balanced fertilizer.");
-    }
-
-    // Generic advices
-    suggestions.push("Add organic matter (compost or farmyard manure) to improve soil structure and nutrient holding.");
-    suggestions.push("Rotate crops and include legumes to naturally replenish nitrogen.");
-    suggestions.push("Avoid over-irrigation; check drainage to prevent nutrient leaching.");
-
-    return suggestions;
-  };
-
-  // When user edits values manually
-  const handleValueChange = (key: string, raw: string) => {
-    const parsed = raw === "" ? null : Number(raw);
-    setValues((prev) => ({ ...prev, [key]: Number.isNaN(parsed as unknown) ? null : parsed }));
-  };
-
-  // Submit final values to backend to save recommendations / farm profile
-  const saveReport = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(
-        `${backendUrl}/api/soil/save`,
-        { values },
-        { headers: { "Content-Type": "application/json" } }
-      );
-      if (res.data?.success) {
-        setResultMessage("Soil report saved successfully.");
-      } else {
-        setError(res.data?.message || "Save failed.");
-      }
-    } catch (err: unknown) {
-      console.error("Save error:", err);
-      setError(err instanceof Error ? err.message : "Save failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const suggestions = generateSuggestions(values);
-
-return (
-  <div className="p-6 max-w-5xl mx-auto space-y-8">
-    {/* Header with image */}
-    <div className="relative w-full h-72 md:h-96 rounded-3xl shadow-xl overflow-hidden">
-  {/* Background Image */}
-  <img
-    src="https://www.usbiopower.com/hs-fs/hubfs/Blog%20Art/AOE-Blog-Organic-Soil.jpg?width=3200&name=AOE-Blog-Organic-Soil.jpg"
-    alt="Soil Health"
-    className="w-full h-full object-cover"
-  />
-
-  {/* Overlay (dark gradient for readability) */}
-  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 flex items-center justify-center">
-    <div className="text-center text-white px-6">
-      <h1 className="text-4xl md:text-5xl font-extrabold tracking-wide drop-shadow-2xl">
-        🌿 Soil Health Report
-      </h1>
-      <p className="mt-4 text-lg md:text-xl font-light leading-relaxed max-w-2xl mx-auto text-gray-200">
-        Upload your soil report to analyze <span className="font-semibold">pH, Nitrogen, Phosphorus, Potassium</span>  
-        and get personalized <span className="text-green-300 font-semibold">crop recommendations</span>.
-      </p>
+    reader.readAsDataURL(imageFile);
+  } catch (err: unknown) {
+    setError(err instanceof Error ? err.message : "Server error");
+    setImageLoading(false);
+  }
+};
+  /* ===================================================
+     🔹 RENDER
+  ===================================================*/
+  const renderSoilValues = (values: SoilValues) => (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-green-50 p-4 rounded-lg">
+      {Object.entries(values).map(([key, val]) => (
+        <div key={key} className="bg-white p-3 rounded shadow text-center">
+          <p className="font-semibold text-gray-700">{key}</p>
+          <p className="text-green-700">{val ?? "N/A"}</p>
+        </div>
+      ))}
     </div>
-  </div>
-</div>
+  );
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* Upload Panel */}
-      <div className="bg-white rounded-2xl shadow-lg border p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-800">Upload Soil Report</h2>
-        <p className="text-sm text-gray-600">
-          Upload lab result image / PDF / CSV. We’ll parse key values (pH, N, P, Ca, K).
-        </p>
+  const renderAnalysis = (analysis: Analysis) => (
+    <div className="bg-green-100 p-4 rounded-lg space-y-2">
+      {analysis && analysis.fertilityLevel && (
+        <p>🌱 Fertility Level: {analysis.fertilityLevel}</p>
+      )}
 
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".jpg,.png,.jpeg,.pdf,.csv"
-          onChange={handleFileChange}
-          className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer 
-                     bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
+      {analysis && analysis.fertilizerSuggestion && (
+        <p>💡 Fertilizer Suggestion: {analysis.fertilizerSuggestion}</p>
+      )}
 
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={analyzeReport}
-            disabled={loading}
-            className="inline-flex items-center px-5 py-2.5 bg-green-600 text-white rounded-lg 
-                       hover:bg-green-500 disabled:opacity-60 transition-all shadow-sm"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin mr-2 w-4 h-4" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <UploadCloud className="mr-2 w-4 h-4" />
-                Analyze Report
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={() => {
-              setFile(null);
-              setPreviewName(null);
-              if (fileRef.current) fileRef.current.value = "";
-              setValues({ ...defaultValues });
-              setResultMessage(null);
-              setError(null);
-            }}
-            className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition-all"
-          >
-            Reset
-          </button>
+      {analysis && analysis.majorIssues && analysis.majorIssues.length > 0 && (
+        <div>
+          <p>⚠️ Major Issues:</p>
+          <ul className="list-disc list-inside">
+            {analysis.majorIssues.map((issue, idx) => (
+              <li key={idx}>{issue}</li>
+            ))}
+          </ul>
         </div>
+      )}
 
-        {previewName && (
-          <div className="text-sm text-gray-700">
-            <span className="font-medium">Selected file:</span> {previewName}
-          </div>
-        )}
-
-        {error && <div className="text-sm text-red-600">{error}</div>}
-        {resultMessage && <div className="text-sm text-green-700">{resultMessage}</div>}
-      </div>
-
-      {/* Values & Suggestions */}
-      <div className="bg-white rounded-2xl shadow-lg border p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-800">Parsed Values (editable)</h2>
-
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { key: "ph", label: "pH", step: "0.1" },
-            { key: "nitrogen", label: "Nitrogen (ppm)" },
-            { key: "phosphorus", label: "Phosphorus (ppm)" },
-            { key: "calcium", label: "Calcium (ppm)" },
-            { key: "potassium", label: "Potassium (ppm)" },
-          ].map(({ key, label, step }) => (
-            <label key={key} className="text-sm text-gray-700">
-              {label}
-              <input
-                type="number"
-                step={step || "1"}
-                value={values[key] ?? ""}
-                onChange={(e) => handleValueChange(key, e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-lg px-3 py-2 
-                           text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </label>
-          ))}
+      {analysis && analysis.cropRecommendation && analysis.cropRecommendation.length > 0 && (
+        <div>
+          <p>🥕 Crop Recommendations:</p>
+          <ul className="list-disc list-inside">
+            {analysis.cropRecommendation.map((crop, idx) => (
+              <li key={idx}>{crop}</li>
+            ))}
+          </ul>
         </div>
-
-        {/* Styled Recommendations */}
-        <div className="mt-6">
-          <h3 className="font-semibold text-gray-800">Recommendations</h3>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-3">
-            <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
-              {suggestions.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mt-4 flex space-x-3">
-            <button
-              onClick={saveReport}
-              disabled={loading}
-              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 
-                         disabled:opacity-60 transition-all shadow-sm"
-            >
-              Save Report
-            </button>
-
-            <button
-              onClick={() => navigator.clipboard?.writeText(suggestions.join("\n"))}
-              className="px-5 py-2.5 border rounded-lg text-gray-700 hover:bg-gray-100 transition-all"
-            >
-              Copy Suggestions
-            </button>
-          </div>
-
-          <p className="mt-3 text-xs text-gray-500 leading-relaxed">
-            <span className="font-medium">Note:</span> suggestions are generated using simple agronomic rules. 
-            For crop-specific dosing, consult extension services or adjust rules per local recommendations.
-          </p>
-        </div>
-      </div>
+      )}
     </div>
+  );
+  const renderSoilImageAnalysis = (soil: SoilAnalysis, health: HealthAssessment) => (
+  <div className="bg-blue-50 p-4 rounded-lg space-y-2">
+    <h3 className="font-semibold text-blue-700">🌱 Soil Analysis</h3>
+    <ul className="list-disc list-inside">
+      <li>Soil Type: {soil.soilType ?? "N/A"}</li>
+      <li>Moisture Level: {soil.moistureLevel ?? "N/A"}</li>
+      <li>Organic Matter Level: {soil.organicMatterLevel ?? "N/A"}</li>
+      <li>Salinity Signs: {soil.salinitySigns != null ? (soil.salinitySigns ? "Yes" : "No") : "N/A"}</li>
+      <li>Surface Condition: {soil.surfaceCondition ?? "N/A"}</li>
+    </ul>
+
+    <h3 className="font-semibold text-green-700 mt-3">💚 Health Assessment</h3>
+    <ul className="list-disc list-inside">
+      <li>Overall Health: {health.overallHealth ?? "N/A"}</li>
+      <li>Confidence Score: {health.confidenceScore ?? "N/A"}</li>
+      <li>Recommendation: {health.recommendation ?? "N/A"}</li>
+    </ul>
   </div>
 );
+
+  return (
+    <div className="p-6 max-w-6xl mx-auto space-y-10">
+      <div className="relative w-full h-72 md:h-96 rounded-3xl shadow-xl overflow-hidden">
+        {/* Background Image */}
+        <img
+          src="https://www.usbiopower.com/hs-fs/hubfs/Blog%20Art/AOE-Blog-Organic-Soil.jpg?width=3200&name=AOE-Blog-Organic-Soil.jpg"
+          alt="Soil Health"
+          className="w-full h-full object-cover"
+        />
+
+        {/* Overlay (dark gradient for readability) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 flex items-center justify-center">
+          <div className="text-center text-white px-6">
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-wide drop-shadow-2xl">
+              🌿 Soil Health Report
+            </h1>
+            <p className="mt-4 text-lg md:text-xl font-light leading-relaxed max-w-2xl mx-auto text-gray-200">
+              Upload your soil report to analyze <span className="font-semibold">pH, Nitrogen, Phosphorus, Potassium</span>
+              and get personalized <span className="text-green-300 font-semibold">crop recommendations</span>.
+            </p>
+          </div>
+        </div>
+      </div>
+      {/* 📄 SOIL REPORT SECTION */}
+      <div className="bg-white p-6 rounded-2xl shadow-lg space-y-4">
+        <h2 className="text-2xl font-bold text-green-700">📄 Soil Report AI Analyzer</h2>
+
+        <input
+          ref={reportRef}
+          type="file"
+          accept=".jpg,.png,.jpeg,.pdf,.csv"
+          onChange={(e) => setReportFile(e.target.files?.[0] ?? null)}
+          className="w-full border rounded-lg p-2"
+        />
+
+        <button
+          onClick={analyzeReport}
+          disabled={reportLoading}
+          className="bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2"
+        >
+          {reportLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <UploadCloud className="w-4 h-4" />}
+          Parse Report (AI)
+        </button>
+
+        {reportValues && renderSoilValues(reportValues)}
+        {reportAnalysis && renderAnalysis(reportAnalysis)}
+      </div>
+
+      {/* 📸 SOIL IMAGE SECTION */}
+      <div className="bg-white p-6 rounded-2xl shadow-lg space-y-4">
+        <h2 className="text-2xl font-bold text-blue-700">📸 Soil Image AI Analyzer</h2>
+
+        <input
+          ref={imageRef}
+          type="file"
+          accept=".jpg,.png,.jpeg"
+          onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+          className="w-full border rounded-lg p-2"
+        />
+
+        <button
+          onClick={analyzeImage}
+          disabled={imageLoading}
+          className="bg-blue-600 text-white px-5 py-2 rounded-lg flex items-center gap-2"
+        >
+          {imageLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <Camera className="w-4 h-4" />}
+          Analyze Soil Image
+        </button>
+
+       {imageValues && imageAnalysis && renderSoilImageAnalysis(imageValues, imageAnalysis)}
+      </div>
+
+      {error && <div className="text-red-600 font-medium text-center">{error}</div>}
+    </div>
+  );
 };
 
 export default SoilHealth;

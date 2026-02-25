@@ -65,26 +65,41 @@ const Login: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    // ✅ Email validation (for both login & signup)
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // ✅ Password validation (for both login & signup)
+    if (!formData.password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    // Signup only validations
     if (!formData.name.trim() && !isLogin) {
-      newErrors.name = 'Name is required';
+      newErrors.name = "Name is required";
     }
 
     if (!formData.mobilenumber.trim() && !isLogin) {
-      newErrors.mobile = 'Mobile number is required';
+      newErrors.mobile = "Mobile number is required";
     } else if (!isLogin && !/^[6-9]\d{9}$/.test(formData.mobilenumber)) {
-      newErrors.mobile = 'Please enter a valid 10-digit mobile number';
+      newErrors.mobile = "Please enter a valid 10-digit mobile number";
     }
 
     if (!formData.state && !isLogin) {
-      newErrors.state = 'Please select your state';
+      newErrors.state = "Please select your state";
     }
 
     if (!formData.district.trim() && !isLogin) {
-      newErrors.district = 'District is required';
+      newErrors.district = "District is required";
     }
 
     if (!formData.soiltype && !isLogin) {
-      newErrors.soiltype = 'Please select your soil type';
+      newErrors.soiltype = "Please select your soil type";
     }
 
     setErrors(newErrors);
@@ -95,7 +110,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     console.log("Submit clicked ✅", formData);
 
-    if (isLogin || validateForm()) {
+    if (validateForm()) {
       try {
         let response;
 
@@ -128,16 +143,63 @@ const Login: React.FC = () => {
 
           navigate("/dashboard");
         } else {
-          toast.error(response.data.message || "Something went wrong!");
+          const backendMessage = response.data.message;
+
+          if (backendMessage.toLowerCase().includes("email")) {
+            setErrors(prev => ({
+              ...prev,
+              email: backendMessage
+            }));
+          } else if (backendMessage.toLowerCase().includes("password")) {
+            setErrors(prev => ({
+              ...prev,
+              password: backendMessage
+            }));
+          } else {
+            setErrors(prev => ({
+              ...prev,
+              password: backendMessage
+            }));
+          }
         }
-      } catch (err) {
-        console.error("Error during login or registration:", err);
-        if (err instanceof Error) {
-          toast.error(err.message);
-        } else {
-          toast.error("Something went wrong");
-        }
-      }
+      } catch (error: unknown) {
+  console.error("Error during login or registration:", error);
+
+  if (axios.isAxiosError(error) && error.response) {
+
+    const backendMessage = error.response.data?.message || "";
+
+    // Clear previous backend errors
+    setErrors({});
+
+    if (backendMessage.toLowerCase().includes("email")) {
+      setErrors(prev => ({
+        ...prev,
+        email: backendMessage
+      }));
+    }
+
+    else if (backendMessage.toLowerCase().includes("password")) {
+      setErrors(prev => ({
+        ...prev,
+        password: backendMessage
+      }));
+    }
+
+    else {
+      setErrors(prev => ({
+        ...prev,
+        general: backendMessage
+      }));
+    }
+
+  } else {
+    setErrors(prev => ({
+      ...prev,
+      general: "Something went wrong"
+    }));
+  }
+}
     }
   };
 
@@ -184,8 +246,8 @@ const Login: React.FC = () => {
               type="button"
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${isLogin
-                  ? 'bg-white text-green-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white text-green-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-800'
                 }`}
             >
               Sign In
@@ -194,8 +256,8 @@ const Login: React.FC = () => {
               type="button"
               onClick={() => setIsLogin(false)}
               className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${!isLogin
-                  ? 'bg-white text-green-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white text-green-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-800'
                 }`}
             >
               Sign Up
@@ -230,10 +292,14 @@ const Login: React.FC = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.email ? "border-red-400" : "border-gray-300"
+                    }`}
                   placeholder="Enter your email address"
                 />
               </div>
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
 
             {/* Password Field (for both login and signup) */}
@@ -246,12 +312,13 @@ const Login: React.FC = () => {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${errors.password ? "border-red-400" : "border-gray-300"
+                    }`}
                   placeholder="Enter your password"
                 />
                 <button
@@ -266,6 +333,9 @@ const Login: React.FC = () => {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              )}
             </div>
 
             {/* Additional fields only for signup */}
@@ -411,9 +481,12 @@ const Login: React.FC = () => {
           {/* Forgot Password (only for login) */}
           {isLogin && (
             <div className="mt-4 text-center">
-              <button className="text-sm text-green-600 hover:text-green-700 font-medium">
-                Forgot your password?
-              </button>
+              <button
+  onClick={() => navigate("/forgot-password")}
+  className="text-sm text-green-600 hover:text-green-700 font-medium"
+>
+  Forgot your password?
+</button>
             </div>
           )}
         </div>

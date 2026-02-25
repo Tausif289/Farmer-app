@@ -37,33 +37,33 @@ interface TokenPayload {
 }
 
 export default function FeedbackPage() {
-   const context = useContext(AppContext);
-    if (!context) {
-      throw new Error("AppContext must be used within AppContextProvider");
-    }
-  const {token}=context;
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error("AppContext must be used within AppContextProvider");
+  }
+  const { token } = context;
   console.log(token);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Feedback | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
-// decode token to get current user id
- //let currentUserId: string | undefined;
-useEffect(() => {
-  if (!token) {
-    console.warn("No token found in context, skipping decode.");
-    return;
-  }
+  // decode token to get current user id
+  //let currentUserId: string | undefined;
+  useEffect(() => {
+    if (!token) {
+      console.warn("No token found in context, skipping decode.");
+      return;
+    }
 
-  try {
-    const payload = jwtDecode<TokenPayload>(token);
-    setCurrentUserId(payload.id);
-    console.log("Decoded userId:", payload.id);
-  } catch (err) {
-    console.error("JWT decode failed", err);
-    setCurrentUserId(undefined);
-  }
-}, [token]);
+    try {
+      const payload = jwtDecode<TokenPayload>(token);
+      setCurrentUserId(payload.id);
+      console.log("Decoded userId:", payload.id);
+    } catch (err) {
+      console.error("JWT decode failed", err);
+      setCurrentUserId(undefined);
+    }
+  }, [token]);
 
   useEffect(() => {
     loadFeedbacks();
@@ -113,46 +113,46 @@ useEffect(() => {
   };
 
   return (
-  <div className="w-full min-h-screen p-6 bg-green-50">
-    <h2 className="text-3xl md:text-4xl font-bold mb-6 text-green-900 text-center">
-      🌿 Farmer Feedback
-    </h2>
+    <div className="w-full min-h-screen p-6 bg-green-50">
+      <h2 className="text-3xl md:text-4xl font-bold mb-6 text-green-900 text-center">
+        🌿 Farmer Feedback
+      </h2>
 
-    <div className="max-w-6xl mx-auto mb-8">
-      <FeedbackForm onAdded={handleAdd} />
-    </div>
+      <div className="max-w-6xl mx-auto mb-8">
+        <FeedbackForm onAdded={handleAdd} />
+      </div>
 
-    <div className="max-w-6xl mx-auto">
-      <h3 className="text-2xl font-semibold mb-4 text-green-800">All Feedbacks</h3>
+      <div className="max-w-6xl mx-auto">
+        <h3 className="text-2xl font-semibold mb-4 text-green-800">All Feedbacks</h3>
 
-      {loading ? (
-        <p className="text-green-700">Loading...</p>
-      ) : feedbacks.length === 0 ? (
-        <p className="text-green-700">No feedback yet.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {feedbacks.map((fb) => (
-            <FeedbackItem
-              key={fb._id}
-              fb={fb}
-              currentUserId={currentUserId}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              refresh={loadFeedbacks}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <p className="text-green-700">Loading...</p>
+        ) : feedbacks.length === 0 ? (
+          <p className="text-green-700">No feedback yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {feedbacks.map((fb) => (
+              <FeedbackItem
+                key={fb._id}
+                fb={fb}
+                currentUserId={currentUserId}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                refresh={loadFeedbacks}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {editing && (
+        <EditModal
+          feedback={editing}
+          onClose={() => setEditing(null)}
+          onSubmit={submitEdit}
+        />
       )}
     </div>
-
-    {editing && (
-      <EditModal
-        feedback={editing}
-        onClose={() => setEditing(null)}
-        onSubmit={submitEdit}
-      />
-    )}
-  </div>
-);
+  );
 
 }

@@ -1,13 +1,45 @@
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Leaf, CloudSun, ShoppingBag, BookOpen } from "lucide-react";
+import {
+  Leaf,
+  CloudSun,
+  ShoppingBag,
+  BookOpen,
+  ArrowRight,
+} from "lucide-react";
+
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  link: string;
+}
+
+interface StepCardProps {
+  step: string;
+  title: string;
+  children: React.ReactNode;
+}
 
 const Home = () => {
+  const [showVideo, setShowVideo] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(
+    !localStorage.getItem("visited")
+  );
+
+  useEffect(() => {
+    if (!localStorage.getItem("visited")) {
+      localStorage.setItem("visited", "true");
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100">
+
+      {/* ================= HERO SECTION ================= */}
       <section
         className="relative flex items-center justify-center text-center text-white 
-       mx-4 sm:mx-6 my-6 sm:my-8 rounded-3xl shadow-2xl overflow-hidden
-       aspect-[2/1] md:aspect-[2/1] lg:aspect-[3/1]"
+        mx-4 my-6 rounded-3xl shadow-2xl overflow-hidden aspect-[2/1] lg:aspect-[3/1]"
         style={{
           backgroundImage:
             "url('https://img.freepik.com/premium-photo/field-green-crops-with-sunset-background_996379-1558.jpg')",
@@ -15,133 +47,199 @@ const Home = () => {
           backgroundPosition: "center",
         }}
       >
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 "></div>
 
-        {/* Text Content */}
-        <div className="relative px-4 md:px-12 lg:px-20 flex flex-col items-center justify-center">
-          {/* Header */}
-          <h1 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4 drop-shadow-[0_3px_6px_rgba(0,0,0,0.7)] tracking-wide">
-            Smart Crop Advisory
-          </h1>
+        <div className="relative px-6 flex flex-col items-center">
+         <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl 
+font-extrabold mb-6 leading-tight tracking-tight px-4">
+  Welcome to{" "}
+  <span className="text-green-500 block sm:inline">
+    Farmers AI
+  </span>
+</h1>
 
-          {/* Paragraph */}
-          <p className="hidden md:block text-base sm:text-lg md:text-xl lg:text-2xl font-medium max-w-3xl mx-auto mb-8 leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
-            Empowering farmers with{" "}
-            <span className="font-semibold text-yellow-300">
-              AI-driven crop recommendations
-            </span>
-            , real-time{" "}
-            <span className="font-semibold text-green-200">
-              market insights
-            </span>
-            , and{" "}
-            <span className="font-semibold text-blue-200">
-              weather forecasting
-            </span>{" "}
-            for smarter farming decisions.
+          <p className="hidden md:block text-xl max-w-3xl mb-8 text-green-100">
+            AI-powered crop prediction, weather forecasting,
+            and smart market insights for modern farmers.
           </p>
 
-          {/* Buttons */}
-          <div className="w-full max-w-sm mx-auto px-2 mt-4">
-            <div className="flex flex-row gap-3 justify-center">
-              <Link
-                to="/login"
-                className="w-28 sm:w-32 px-4 py-2 sm:py-3 bg-yellow-400 text-gray-900 text-base sm:text-lg font-semibold 
-                   rounded-xl shadow-lg shadow-black/30 hover:bg-yellow-300 hover:shadow-2xl 
-                   transform hover:-translate-y-1 transition-all text-center"
-              >
-                Login
-              </Link>
-              <Link
-                to="/login"
-                className="w-28 sm:w-32 px-4 py-2 sm:py-3 bg-green-500 text-white text-base sm:text-lg font-semibold 
-                   rounded-xl shadow-lg shadow-black/30 hover:bg-green-400 hover:shadow-2xl 
-                   transform hover:-translate-y-1 transition-all text-center"
-              >
-                Sign Up
-              </Link>
-            </div>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link
+              to="/login"
+              className="px-6 py-3 bg-yellow-400 text-gray-900 font-semibold rounded-xl 
+              hover:bg-yellow-300 transition"
+            >
+              Login
+            </Link>
+
+            <Link
+              to="/dashboard"
+              className="px-6 py-3 bg-white/20 backdrop-blur-md border border-white/30
+              text-white font-semibold rounded-xl hover:bg-white/30 transition"
+            >
+              Continue  →
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="grid md:grid-cols-4 gap-6 px-6 max-w-6xl mx-auto py-12">
-        <div className="bg-white shadow-md rounded-2xl p-6 text-center hover:shadow-lg transition">
-          <Leaf className="mx-auto text-green-600 mb-4" size={40} />
-          <h2 className="text-xl font-semibold mb-2">Crop Recommendation</h2>
-          <p className="text-gray-600">
-            Get personalized crop suggestions based on soil, season, and region.
-          </p>
-          <Link
-            to="/crop-recommendation"
-            className="text-green-600 font-medium mt-3 inline-block hover:underline"
-          >
-            Explore →
-          </Link>
-        </div>
+      {/* ================= FEATURES ================= */}
+      <section className="grid md:grid-cols-4 gap-8 px-6 max-w-7xl mx-auto py-16">
+        <FeatureCard
+          icon={<Leaf size={42} />}
+          title="Crop Recommendation"
+          desc="AI-based crop suggestions using soil data."
+          link="/crop-recommendation"
+        />
+        <FeatureCard
+          icon={<ShoppingBag size={42} />}
+          title="Market Prices"
+          desc="Live mandi prices & profit insights."
+          link="/market-price"
+        />
+        <FeatureCard
+          icon={<CloudSun size={42} />}
+          title="Weather Forecast"
+          desc="5-day accurate weather predictions."
+          link="/weather-forecast"
+        />
+        <FeatureCard
+          icon={<BookOpen size={42} />}
+          title="Farming Guide"
+          desc="Modern farming techniques & pest control."
+          link="/farming-guide"
+        />
+      </section>
 
-        <div className="bg-white shadow-md rounded-2xl p-6 text-center hover:shadow-lg transition">
-          <ShoppingBag className="mx-auto text-yellow-600 mb-4" size={40} />
-          <h2 className="text-xl font-semibold mb-2">Market Prices</h2>
-          <p className="text-gray-600">
-            Check real-time prices of crops in your local markets.
-          </p>
-          <Link
-            to="/market-price"
-            className="text-green-600 font-medium mt-3 inline-block hover:underline"
-          >
-            Explore →
-          </Link>
-        </div>
+      {/* ================= HOW TO USE ================= */}
+      <section className="bg-white py-20 px-6">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-green-800 mb-12">
+            How to Use Farmers AI
+          </h2>
 
-        <div className="bg-white shadow-md rounded-2xl p-6 text-center hover:shadow-lg transition">
-          <CloudSun className="mx-auto text-blue-600 mb-4" size={40} />
-          <h2 className="text-xl font-semibold mb-2">Weather Forecast</h2>
-          <p className="text-gray-600">
-            Get 10-day weather forecasts to plan farming activities better.
-          </p>
-          <Link
-            to="/weather-forecast"
-            className="text-green-600 font-medium mt-3 inline-block hover:underline"
-          >
-            Explore →
-          </Link>
-        </div>
+          <div className="grid md:grid-cols-3 gap-10">
+            <StepCard step="1" title="Login or Continue">
+              <p>Access account or explore as guest.</p>
+            </StepCard>
 
-        <div className="bg-white shadow-md rounded-2xl p-6 text-center hover:shadow-lg transition">
-          <BookOpen className="mx-auto text-purple-600 mb-4" size={40} />
-          <h2 className="text-xl font-semibold mb-2">Farming Guide</h2>
-          <p className="text-gray-600">
-            Learn modern techniques, pest control, and best farming practices.
-          </p>
-          <Link
-            to="/farming-guide"
-            className="text-green-600 font-medium mt-3 inline-block hover:underline"
-          >
-            Explore →
-          </Link>
+            <StepCard step="2" title="Use Smart Features">
+              <p>Check crop, market, weather & guides.</p>
+            </StepCard>
+
+            <StepCard step="3" title="Increase Profit">
+              <p>Plan smartly and grow better yield.</p>
+            </StepCard>
+          </div>
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="bg-green-700 text-white text-center py-12 px-6 mt-12">
-        <h2 className="text-3xl font-bold mb-4">
-          Start Your Smart Farming Journey
+      {/* ================= TIMELINE ================= */}
+      <section className="py-20 bg-green-50">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-green-800">
+            Your Smart Farming Journey
+          </h2>
+
+          <div className="border-l-4 border-green-600 pl-8 space-y-10">
+            <p>🌱 Enter Soil Data → Get AI Crop Suggestion</p>
+            <p>📈 Compare Market Prices</p>
+            <p>🌦 Check Weather Forecast</p>
+            <p>💰 Harvest & Sell at Best Time</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= CTA ================= */}
+      <section className="bg-gradient-to-r from-green-700 to-green-900 text-white text-center py-16 px-6">
+        <h2 className="text-4xl font-bold mb-6">
+          Grow Smarter with AI
         </h2>
-        <p className="mb-6 text-lg">
-          Join thousands of farmers who are already growing smarter with AI.
-        </p>
+
         <Link
           to="/dashboard"
-          className="px-6 py-3 bg-white text-green-700 text-lg rounded-2xl shadow-md hover:bg-gray-200 transition"
+          className="inline-flex items-center gap-2 px-8 py-4 bg-white text-green-800 
+          rounded-2xl hover:scale-105 transition"
         >
-          Go to Dashboard
+          Start Exploring <ArrowRight size={20} />
         </Link>
       </section>
+
+      {/* ================= VIDEO MODAL ================= */}
+      {showVideo && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl w-[90%] md:w-[700px] relative">
+            <button
+              onClick={() => setShowVideo(false)}
+              className="absolute top-3 right-3"
+            >
+              ✕
+            </button>
+            <iframe
+              className="w-full h-[400px]"
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+              title="Tutorial"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ================= ONBOARDING ================= */}
+      {showOnboarding && (
+        <div className="fixed bottom-6 right-6 bg-green-700 text-white p-6 rounded-2xl shadow-2xl w-80 z-50">
+          <h4 className="font-bold mb-2">👋 Welcome to Farmers AI</h4>
+          <p className="text-sm mb-4">
+            Explore AI crop prediction & smart insights.
+          </p>
+          <button
+            onClick={() => setShowOnboarding(false)}
+            className="bg-white text-green-700 px-4 py-2 rounded-lg text-sm"
+          >
+            Got It
+          </button>
+        </div>
+      )}
+
+     
+
     </div>
   );
 };
+
+/* ================= COMPONENTS ================= */
+
+const FeatureCard: React.FC<FeatureCardProps> = ({
+  icon,
+  title,
+  desc,
+  link,
+}) => (
+  <div className="bg-white shadow-lg rounded-2xl p-8 text-center hover:shadow-2xl transition">
+    <div className="mb-4 flex justify-center text-green-600">{icon}</div>
+    <h2 className="text-xl font-bold mb-3">{title}</h2>
+    <p className="text-gray-600 mb-4">{desc}</p>
+    <Link to={link} className="text-green-600 font-semibold hover:underline">
+      Explore →
+    </Link>
+  </div>
+);
+
+const StepCard: React.FC<StepCardProps> = ({
+  step,
+  title,
+  children,
+}) => (
+  <div className="relative bg-green-50 p-8 rounded-2xl shadow-lg">
+    <div className="absolute -top-6 left-6 w-12 h-12 bg-green-600 text-white 
+    rounded-full flex items-center justify-center text-xl font-bold animate-bounce">
+      {step}
+    </div>
+    <h3 className="text-2xl font-semibold text-green-700 mt-6 mb-4">
+      {title}
+    </h3>
+    <div className="text-gray-600">{children}</div>
+  </div>
+);
 
 export default Home;

@@ -4,8 +4,10 @@ import {
   Sun,
   Cloud,
   CloudRain,
+  Wind,
 } from "lucide-react";
 import { AppContext } from "../context/appcontext";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 import type { LucideIcon } from "lucide-react";
 
@@ -14,10 +16,13 @@ interface CurrentWeather {
   condition: string;
   humidity: number;
   windSpeed: number;
+  windDeg: number;
   visibility: number;
-  uvIndex: number;
   feelsLike: number;
+  sunrise: number;
+  sunset: number;
   location: string;
+  timezoneOffset: number;
 }
 
 interface ForecastDay {
@@ -28,7 +33,6 @@ interface ForecastDay {
   humidity: number;
   precipitation: number;
 }
-
 interface ForecastItem {
   dt: number;
   main: {
@@ -38,6 +42,7 @@ interface ForecastItem {
   };
   weather: {
     main: string;
+    description: string;
   }[];
   pop: number;
 }
@@ -46,19 +51,23 @@ interface ForecastApiResponse {
   list: ForecastItem[];
 }
 
-
 const WeatherForecast: React.FC = () => {
   const context = useContext(AppContext);
   if (!context) throw new Error("AppContext must be used inside AppContextProvider");
 
   const { state, district } = context;
-  const userState = context.state || "Uttar Pradesh";
-  const userDistrict = context.district || "Lucknow";
   const [currentWeather, setCurrentWeather] = useState<CurrentWeather | null>(null);
   const [forecast, setForecast] = useState<ForecastDay[]>([]);
   const [loading, setLoading] = useState(true);
-  console.log(import.meta.env.VITE_WEATHER_API_KEY)
-  // Map OpenWeather conditions → icons
+  const [searchQuery, setSearchQuery] = useState("");
+  const [manualDistrict, setManualDistrict] = useState("");
+  const [isCelsius, setIsCelsius] = useState(true);
+
+  const userDistrict = manualDistrict || district || "Lucknow";
+  const userState = state || "Uttar Pradesh";
+
+  const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
+
   const getWeatherIcon = (condition: string) => {
     if (condition.includes("Rain")) return CloudRain;
     if (condition.includes("Cloud")) return Cloud;
@@ -66,157 +75,206 @@ const WeatherForecast: React.FC = () => {
     return Sun;
   };
 
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        setLoading(true);
+  const handleSearch = () => {
+    if (searchQuery.trim() !== "") setManualDistrict(searchQuery.trim());
+  };
 
-        // ✅ Current weather
-        const currentResp = await axios.get(
-          `https://api.openweathermap.org/data/2.5/weather`,
-          {
-            params: {
-              q: `${district},IN`,
-              units: "metric",
-              appid: import.meta.env.VITE_WEATHER_API_KEY,
-            },
-          }
-        );
-        console.log('error',import.meta.env.VITE_WEATHER_API_KEY);
-        const data = currentResp.data;
-        setCurrentWeather({
-          temperature: Math.round(data.main.temp),
-          condition: data.weather[0].description,
-          humidity: data.main.humidity,
-          windSpeed: Math.round(data.wind.speed * 3.6), // m/s → km/h
-          visibility: Math.round(data.visibility / 1000), // m → km
-          uvIndex: 6, // need separate API, hardcode or ignore
-          feelsLike: Math.round(data.main.feels_like),
-          location: `${userDistrict}, ${userState}, India`,
-        });
+  const fetchWeather = async () => {
+    try {
+      setLoading(true);
 
-        // ✅ Forecast (5-day / 3-hour API)
-        const forecastResp = await axios.get<ForecastApiResponse>(
-          `https://api.openweathermap.org/data/2.5/forecast`,
-          {
-            params: {
-              q: `${userDistrict},IN`,
-              units: "metric",
-              appid: "939fc60059567bed0633ecb215e5b5b1",
-            },
-          }
-        );
+      // ✅ Current Weather
+      const currentResp = await axios.get("https://api.openweathermap.org/data/2.5/weather", {
+        params: { q: `${userDistrict},IN`, units: "metric", appid: API_KEY },
+      });
+      const data = currentResp.data;
 
-        // Pick one forecast every 24h (8 * 3h = 24h)
-        const daily = forecastResp.data.list
-          .filter((_, idx) => idx % 8 === 0)
-          .slice(0, 5)
-          .map((item, index) => ({
-            day:
-              index === 0
-                ? "Today"
-                : new Date(item.dt * 1000).toLocaleDateString("en-US", {
-                  weekday: "long",
-                }),
-            icon: getWeatherIcon(item.weather[0].main),
-            high: Math.round(item.main.temp_max),
-            low: Math.round(item.main.temp_min),
-            humidity: item.main.humidity,
-            precipitation: Math.round(item.pop * 100),
-          }));
-        console.log(import.meta.env.VITE_WEATHER_API_KEY);
-        setForecast(daily);
-      } catch (err) {
-        console.error("Weather fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setCurrentWeather({
+        temperature: Math.round(data.main.temp),
+        condition: data.weather[0].description,
+        humidity: data.main.humidity,
+        windSpeed: Math.round(data.wind.speed * 3.6),
+        windDeg: data.wind.deg,
+        visibility: Math.round((data.visibility || 0) / 1000),
+        feelsLike: Math.round(data.main.feels_like),
+        sunrise: data.sys.sunrise,
+        sunset: data.sys.sunset,
+        location: `${userDistrict}, ${userState}, India`,
+        timezoneOffset: data.timezone,
+      });
 
-    if (state && district) {
-      fetchWeather();
+      // ✅ Forecast (5-day / 3-hour)
+      const forecastResp = await axios.get<ForecastApiResponse>(
+  `https://api.openweathermap.org/data/2.5/forecast`,
+  {
+    params: {
+      q: `${userDistrict},IN`,
+      units: "metric",
+      appid: API_KEY,
+    },
+  }
+);
+
+      const dailyForecast: ForecastDay[] = forecastResp.data.list
+  // Pick one forecast per day (every 8 × 3h = 24h)
+  .filter((_, idx) => idx % 8 === 0)
+  .slice(0, 5)
+  .map((item: ForecastItem, idx: number) => ({
+    day:
+      idx === 0
+        ? "Today"
+        : new Date(item.dt * 1000).toLocaleDateString("en-US", {
+            weekday: "long",
+          }),
+    icon: getWeatherIcon(item.weather[0].main),
+    high: Math.round(item.main.temp_max),
+    low: Math.round(item.main.temp_min),
+    humidity: item.main.humidity,
+    precipitation: Math.round((item.pop || 0) * 100),
+  }));
+
+      setForecast(dailyForecast);
+    } catch (err) {
+      console.error("Weather fetch error:", err);
+    } finally {
+      setLoading(false);
     }
-  }, [state, district]);
+  };
 
+  useEffect(() => {
+    if (state && district) fetchWeather();
+    const interval = setInterval(fetchWeather, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [state, district, manualDistrict]);
+
+  const toggleUnit = () => setIsCelsius(!isCelsius);
+  const convertTemp = (temp: number) => (isCelsius ? temp : Math.round(temp * 9 / 5 + 32));
 
   if (loading) return <p>Loading weather data...</p>;
   if (!currentWeather) return <p>No weather data available.</p>;
 
+  const localTime = new Date(Date.now() + currentWeather.timezoneOffset * 1000).toLocaleString();
+
   return (
     <div className="space-y-6">
-      {/* 🔹 Current Weather Card */}
+{/* Modern Search */}
+{/* Modern Responsive Search */}
+<div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 w-full max-w-6xl mx-auto px-4 gap-4">
+
+  {/* Heading */}
+  <h2 className="text-xl sm:text-6xl font-bold text-gray-800 ">
+    <div className="mt-3 lg:mt-0 lg:ml-6 bg-blue-50 border-l-4 border-blue-400 p-3 rounded-md text-blue-700 sm:text-xl shadow-sm w-full lg:w-auto">
+    🔹 You can search for any district or location worldwide to get accurate weather updates.
+  </div>
+  </h2>
+
+  {/* Search input + button */}
+  <div className="flex flex-col sm:flex-row w-full lg:w-2/3 gap-3">
+    <div className="relative flex-1">
+      <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 text-lg">🔍</span>
+      <input
+        type="text"
+        placeholder="Enter district or location..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+      />
+    </div>
+    <button
+      onClick={handleSearch}
+      className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-full shadow-md transition"
+    >
+      Search
+    </button>
+  </div>
+</div>
+      {/* Current Weather */}
       <div className="relative bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-6 shadow-lg overflow-hidden">
         <div className="absolute inset-0 opacity-20">
-          <img
-            src="https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=1200"
-            alt="Sky and clouds"
-            className="w-full h-full object-cover"
-          />
+          <img src="https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Sky" className="w-full h-full object-cover" />
         </div>
         <div className="relative">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Current Weather Conditions</h2>
-              <p className="text-blue-100 flex items-center space-x-2">
-                <span>📍 Your farm location - {district},{state},India</span>
-              </p>
-              <p className="text-blue-200 text-sm mt-1">Last updated: just now</p>
+              <h2 className="text-3xl font-bold mb-2">Current Weather</h2>
+              <p>{currentWeather.location}</p>
+              <p className="text-sm">Local Time: {localTime}</p>
             </div>
             <div className="text-center">
               <Sun className="w-20 h-20 text-yellow-300 mb-2" />
-              <p className="text-blue-100 text-sm">{currentWeather.condition}</p>
+              <p>{currentWeather.condition}</p>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold">{currentWeather.temperature}°C</div>
-              <p className="text-blue-100 text-sm">Temperature</p>
+          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-3xl font-bold">{convertTemp(currentWeather.temperature)}°{isCelsius ? "C" : "F"}</div>
+              <p>Temperature</p>
             </div>
-            <div className="text-center">
-              <div className="text-xl font-semibold">{currentWeather.humidity}%</div>
-              <p className="text-blue-100 text-sm">Humidity</p>
+            <div>
+              <div>{currentWeather.humidity}%</div>
+              <p>Humidity</p>
             </div>
-            <div className="text-center">
-              <div className="text-xl font-semibold">{currentWeather.windSpeed} km/h</div>
-              <p className="text-blue-100 text-sm">Wind Speed</p>
+            <div>
+              <div>{currentWeather.windSpeed} km/h</div>
+              <p>Wind <Wind className="inline w-4 h-4 ml-1" /></p>
             </div>
-            <div className="text-center">
-              <div className="text-xl font-semibold">{currentWeather.feelsLike}°C</div>
-              <p className="text-blue-100 text-sm">Feels Like</p>
+            <div>
+              <div>{currentWeather.visibility} km</div>
+              <p>Visibility</p>
+            </div>
+            <div>
+              <div>{new Date(currentWeather.sunrise * 1000).toLocaleTimeString()}</div>
+              <p>Sunrise</p>
+            </div>
+            <div>
+              <div>{new Date(currentWeather.sunset * 1000).toLocaleTimeString()}</div>
+              <p>Sunset</p>
             </div>
           </div>
+          <button onClick={toggleUnit} className="mt-2 px-4 py-2 bg-white text-blue-600 rounded">Toggle °C/°F</button>
         </div>
       </div>
 
-      {/* 🔹 Forecast & CropAdvice UI stays same */}
-      {/* reuse your existing forecast + cropAdvice rendering below */}
-
-      {/* Forecast */}
+      {/* 5-Day Forecast */}
       <div className="bg-white rounded-xl p-6 shadow-lg">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-gray-800">5-Day Weather Forecast</h3>
-        </div>
+        <h3 className="text-xl font-bold mb-4">5-Day Forecast</h3>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {forecast.map((day, index) => (
-            <div key={index} className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg hover:shadow-md transition-shadow">
-              <p className="font-semibold text-gray-800 mb-2">{day.day}</p>
+          {forecast.map((day, idx) => (
+            <div key={idx} className="text-center p-4 bg-gray-50 rounded-lg">
+              <p className="font-semibold">{day.day}</p>
               <day.icon className="w-8 h-8 mx-auto mb-2 text-blue-500" />
-              <div className="space-y-1">
-                <div className="flex justify-center space-x-2 text-sm">
-                  <span className="font-semibold">{day.high}°</span>
-                  <span className="text-gray-500">{day.low}°</span>
-                </div>
-                <p className="text-xs text-gray-600">{day.precipitation}% rain</p>
-                <p className="text-xs text-gray-500">Humidity: {day.humidity}%</p>
-              </div>
+              <p>{convertTemp(day.high)}° / {convertTemp(day.low)}°</p>
+              <p>Humidity: {day.humidity}%</p>
+              <p>Rain: {day.precipitation}%</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Crop Advisory (same UI as your code) */}
-      {/* ... keep rest of your UI unchanged ... */}
+      {/* Temperature Trend */}
+      <div className="bg-white rounded-xl p-6 shadow-lg">
+        <h3 className="text-xl font-bold mb-4">Temperature Trend</h3>
+      <ResponsiveContainer width="100%" height={200}>
+  <LineChart data={forecast}>
+    <XAxis 
+      dataKey="day" 
+      tickFormatter={(day) => day.slice(0, 3)} 
+      angle={0} 
+      textAnchor="end" 
+      interval={0} 
+    />
+    <YAxis width={30} dx={-5} />
+    <Tooltip
+      formatter={(value: string | number | undefined) =>
+        value !== undefined ? `${convertTemp(Number(value))}°${isCelsius ? "C" : "F"}` : ""
+      }
+    />
+    <Line type="monotone" dataKey="high" stroke="#f56565" name="High Temp" />
+    <Line type="monotone" dataKey="low" stroke="#4299e1" name="Low Temp" />
+  </LineChart>
+</ResponsiveContainer>
+      </div>
     </div>
   );
 };
